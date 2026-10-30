@@ -7,8 +7,12 @@
  *   subtract  - Subtraction    (a - b)
  *   multiply  - Multiplication (a * b)
  *   divide    - Division       (a / b), errors on division by zero
+ *   modulo    - Remainder      (a % b), errors on division by zero
+ *   power     - Exponentiation (a ** b), requires a finite real result
+ *   sqrt      - Square root    (Math.sqrt(a)), requires a non-negative number
  *
  * Usage: node src/calculator.js <operation> <number1> <number2>
+ *        node src/calculator.js sqrt <number>
  * Example: node src/calculator.js add 2 3
  */
 
@@ -22,6 +26,25 @@ const operations = {
     }
     return a / b;
   },
+  modulo: (a, b) => {
+    if (b === 0) {
+      throw new Error('Modulo by zero is not allowed.');
+    }
+    return a % b;
+  },
+  power: (a, b) => {
+    const result = a ** b;
+    if (!Number.isFinite(result)) {
+      throw new Error('Exponentiation must produce a finite real number.');
+    }
+    return result;
+  },
+  sqrt: (a) => {
+    if (a < 0) {
+      throw new Error('Square root of a negative number is not allowed.');
+    }
+    return Math.sqrt(a);
+  },
 };
 
 function calculate(operation, a, b) {
@@ -31,20 +54,24 @@ function calculate(operation, a, b) {
       `Unknown operation "${operation}". Supported: ${Object.keys(operations).join(', ')}.`
     );
   }
+  if (!Number.isFinite(a) || (operation !== 'sqrt' && !Number.isFinite(b))) {
+    throw new Error('Operands must be valid numbers.');
+  }
   return fn(a, b);
 }
 
 function main(args) {
-  if (args.length !== 3) {
-    console.error('Usage: node calculator.js <add|subtract|multiply|divide> <number1> <number2>');
+  const [operation, rawA, rawB] = args;
+  if (args.length !== (operation === 'sqrt' ? 2 : 3)) {
+    console.error('Usage: node calculator.js <add|subtract|multiply|divide|modulo|power> <number1> <number2>\n       node calculator.js sqrt <number>');
     process.exit(1);
   }
 
-  const [operation, rawA, rawB] = args;
   const a = Number(rawA);
   const b = Number(rawB);
 
-  if (rawA.trim() === '' || rawB.trim() === '' || !Number.isFinite(a) || !Number.isFinite(b)) {
+  if (rawA.trim() === '' || !Number.isFinite(a) ||
+      (operation !== 'sqrt' && (rawB.trim() === '' || !Number.isFinite(b)))) {
     console.error('Error: both operands must be valid numbers.');
     process.exit(1);
   }
